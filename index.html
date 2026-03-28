@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cogninest Analytics Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-pill: 999px;
+      --shadow: 0 30px 70px rgba(20, 28, 40, 0.12);
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f3efe7;
+      --bg-2: #ede6dc;
+      --panel: rgba(255, 252, 247, 0.88);
+      --panel-2: rgba(255, 250, 243, 0.96);
+      --panel-3: rgba(10, 20, 35, 0.04);
+      --line: rgba(24, 33, 46, 0.1);
+      --line-strong: rgba(24, 33, 46, 0.18);
+      --text: #18212e;
+      --muted: #617284;
+      --muted-2: #7c8795;
+      --accent: #0f766e;
+      --accent-2: #3159d6;
+      --accent-3: #c46f1b;
+      --success: #15803d;
+      --danger: #b91c1c;
+      --hero-glow-1: rgba(15, 118, 110, 0.18);
+      --hero-glow-2: rgba(49, 89, 214, 0.16);
+      --hero-glow-3: rgba(196, 111, 27, 0.14);
+      --sql-bg: linear-gradient(180deg, rgba(20, 32, 52, 0.98), rgba(12, 22, 38, 0.96));
+      --sql-text: #9edcff;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #07111f;
+      --bg-2: #0b1728;
+      --panel: rgba(11, 23, 40, 0.84);
+      --panel-2: rgba(15, 29, 48, 0.94);
+      --panel-3: rgba(255, 255, 255, 0.04);
+      --line: rgba(149, 176, 214, 0.16);
+      --line-strong: rgba(149, 176, 214, 0.28);
+      --text: #edf4ff;
+      --muted: #9bb0cb;
+      --muted-2: #7487a2;
+      --accent: #6ad1c0;
+      --accent-2: #7c9dff;
+      --accent-3: #f6bc73;
+      --success: #7cf0c5;
+      --danger: #ffb0b0;
+      --hero-glow-1: rgba(106, 209, 192, 0.18);
+      --hero-glow-2: rgba(124, 157, 255, 0.2);
+      --hero-glow-3: rgba(246, 188, 115, 0.12);
+      --sql-bg: linear-gradient(180deg, rgba(7, 17, 31, 0.98), rgba(11, 23, 40, 0.94));
+      --sql-text: #8fd9ff;
+      --shadow: 0 32px 80px rgba(0, 0, 0, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Manrope", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, var(--hero-glow-1), transparent 28%),
+        radial-gradient(circle at 100% 0%, var(--hero-glow-2), transparent 24%),
+        radial-gradient(circle at 50% 100%, var(--hero-glow-3), transparent 30%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    .shell {
+      width: min(1720px, calc(100vw - 24px));
+      margin: 10px auto;
+      padding: 20px;
+      border-radius: 34px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 10px 8px 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 50px;
+      height: 50px;
+      border-radius: 17px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #06101d;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .brand-copy h1 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.8rem, 3vw, 2.7rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-copy p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill,
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .pill {
+      color: var(--muted);
+    }
+
+    .toggle {
+      cursor: pointer;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 0 5px rgba(124, 240, 197, 0.12);
+    }
+
+    .hero {
+      padding: 30px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, var(--panel-2), rgba(255, 255, 255, 0.02));
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: radial-gradient(circle, var(--hero-glow-2), transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(106, 209, 192, 0.12);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero h2 {
+      margin: 18px 0 10px;
+      max-width: 12ch;
+      font-family: "Fraunces", serif;
+      font-size: clamp(2.4rem, 5vw, 4.9rem);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 64ch;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 1rem;
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-card {
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+    }
+
+    .hero-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-card strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+    }
+
+    .panel-header {
+      padding: 22px 22px 0;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .panel-header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.92rem;
+    }
+
+    .query-body,
+    .results-body {
+      padding: 18px 22px 22px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 1.15rem;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      font: inherit;
+      line-height: 1.6;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      border-color: rgba(106, 209, 192, 0.56);
+      box-shadow: 0 0 0 5px rgba(106, 209, 192, 0.08);
+    }
+
+    textarea::placeholder {
+      color: var(--muted-2);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 15px;
+      padding: 13px 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.16s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      transform: none;
+      cursor: wait;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #07111f;
+    }
+
+    .secondary {
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--text);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      background: var(--panel-3);
+      color: var(--muted);
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      font-weight: 700;
+    }
+
+    .chip:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+    }
+
+    .results-body {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      min-height: 780px;
+    }
+
+    .surface {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      overflow: hidden;
+    }
+
+    .surface-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-3);
+    }
+
+    .surface-head h4 {
+      margin: 0;
+      font-size: 0.96rem;
+    }
+
+    .surface-head span {
+      color: var(--muted);
+      font-size: 0.77rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .message-box,
+    .sql-box,
+    .table-box,
+    .chart-shell {
+      padding: 16px;
+    }
+
+    .message-box {
+      line-height: 1.7;
+    }
+
+    .message-box.is-empty,
+    .sql-box.is-empty,
+    .table-box.is-empty,
+    .chart-shell.is-empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .message-box.is-error {
+      color: var(--danger);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge.agent {
+      color: var(--success);
+      border-color: rgba(124, 240, 197, 0.25);
+      background: rgba(124, 240, 197, 0.08);
+    }
+
+    .badge.fallback {
+      color: var(--accent-3);
+      border-color: rgba(246, 188, 115, 0.25);
+      background: rgba(246, 188, 115, 0.08);
+    }
+
+    .sql-box {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.84rem;
+      line-height: 1.8;
+      color: var(--sql-text);
+      background: var(--sql-bg);
+    }
+
+    .table-box {
+      padding: 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 410px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      text-align: left;
+      padding: 14px 16px;
+      background: var(--panel-2);
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(149, 176, 214, 0.08);
+      font-size: 0.88rem;
+    }
+
+    tbody tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .chart-shell {
+      min-height: 220px;
+    }
+
+    #chartBox {
+      width: 100%;
+      min-height: 260px;
+    }
+
+    .footer-note {
+      color: var(--muted-2);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1120px) {
+      .hero-grid,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: calc(100vw - 10px);
+        margin: 5px auto;
+        padding: 12px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .query-body,
+      .results-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <div class="brand">
+        <div class="brand-mark">CN</div>
+        <div class="brand-copy">
+          <h1>Cogninest Analytics Copilot</h1>
+          <p>Modern clinic operations dashboard and NL2SQL copilot for live business questions.</p>
+        </div>
+      </div>
+      <div class="top-controls">
+        <div class="pill"><span class="pulse"></span><span id="headerStatus">Checking platform</span></div>
+        <button id="themeToggle" class="toggle" aria-label="Toggle theme">Theme: Light</button>
+      </div>
+    </section>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">Business standards | Modern dashboard | Chat copilot</span>
+          <h2>From question to SQL to insight, in one clean workflow.</h2>
+          <p>
+            Ask a plain-English business question, review the generated SQL, inspect the answer source,
+            and visualize the result with charts when the data supports it. Designed for demos, reviews, and assignment walkthroughs.
+          </p>
+        </div>
+        <div class="hero-side">
+          <div class="hero-card">
+            <span>Use case</span>
+            <strong>Operations leaders can track revenue, appointments, registrations, no-shows, and overdue invoices without writing SQL.</strong>
+          </div>
+          <div class="hero-card">
+            <span>Why this works</span>
+            <strong>Safe SQL validation, semantic catalog support, seeded memory, and transparent answer-source badges keep the system explainable.</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="panel-header">
+          <h3>Copilot Workspace</h3>
+          <p>Use starter prompts or ask your own business question about patients, doctors, appointments, treatments, invoices, or trends.</p>
+        </div>
+        <div class="query-body">
+          <div class="metrics">
+            <div class="metric">
+              <span>API Health</span>
+              <strong id="statusText">Checking...</strong>
+            </div>
+            <div class="metric">
+              <span>Database</span>
+              <strong id="databaseText">Checking...</strong>
+            </div>
+            <div class="metric">
+              <span>Seeded Memory</span>
+              <strong id="memoryText">--</strong>
+            </div>
+          </div>
+
+          <label class="label" for="questionInput">Ask a business question</label>
+          <textarea id="questionInput" placeholder="Example: Show monthly appointment count for the past 6 months"></textarea>
+
+          <div class="button-row">
+            <button id="runBtn" class="primary">Run Query</button>
+            <button id="healthBtn" class="secondary">Refresh Health</button>
+          </div>
+
+          <div class="chips">
+            <button class="chip" data-question="How many patients do we have?">Patient Count</button>
+            <button class="chip" data-question="Show revenue by doctor">Revenue by Doctor</button>
+            <button class="chip" data-question="Show unpaid invoices">Unpaid Invoices</button>
+            <button class="chip" data-question="What percentage of appointments are no-shows?">No-Show Rate</button>
+            <button class="chip" data-question="Compare revenue between departments">Revenue by Department</button>
+            <button class="chip" data-question="Show patient registration trend by month">Registration Trend</button>
+          </div>
+
+          <p class="footer-note">
+            Use <code>Ctrl/Cmd + Enter</code> to submit quickly. The dashboard shows the first 20 rows in preview mode and renders a chart when the result is chartable.
+          </p>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>Execution Console</h3>
+          <p>Response summary, answer-source badges, SQL, table preview, and chart output are all visible in a single analyst-friendly workspace.</p>
+        </div>
+        <div class="results-body">
+          <div class="surface">
+            <div class="surface-head">
+              <h4>Response Summary</h4>
+              <span>Outcome</span>
+            </div>
+            <div id="messageBox" class="message-box is-empty">Run a question to see the response summary.</div>
+          </div>
+
+          <div class="surface">
+            <div class="surface-head">
+              <h4>Generated SQL</h4>
+              <span>SQL</span>
+            </div>
+            <pre id="sqlBox" class="sql-box is-empty">No SQL yet.</pre>
+          </div>
+
+          <div class="surface">
+            <div class="surface-head">
+              <h4>Visualization</h4>
+              <span id="chartMeta">Chart</span>
+            </div>
+            <div id="chartShell" class="chart-shell is-empty">No chart yet.</div>
+          </div>
+
+          <div class="surface">
+            <div class="surface-head">
+              <h4>Rows Preview</h4>
+              <span id="rowMeta">Waiting</span>
+            </div>
+            <div id="tableBox" class="table-box is-empty">No rows yet.</div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const questionInput = document.getElementById("questionInput");
+    const runBtn = document.getElementById("runBtn");
+    const healthBtn = document.getElementById("healthBtn");
+    const themeToggle = document.getElementById("themeToggle");
+    const statusText = document.getElementById("statusText");
+    const databaseText = document.getElementById("databaseText");
+    const memoryText = document.getElementById("memoryText");
+    const headerStatus = document.getElementById("headerStatus");
+    const messageBox = document.getElementById("messageBox");
+    const sqlBox = document.getElementById("sqlBox");
+    const tableBox = document.getElementById("tableBox");
+    const rowMeta = document.getElementById("rowMeta");
+    const chartShell = document.getElementById("chartShell");
+    const chartMeta = document.getElementById("chartMeta");
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setLoading(isLoading) {
+      runBtn.disabled = isLoading;
+      runBtn.textContent = isLoading ? "Running..." : "Run Query";
+    }
+
+    function setTheme(theme) {
+      root.setAttribute("data-theme", theme);
+      localStorage.setItem("cogninest-theme", theme);
+      themeToggle.textContent = theme === "dark" ? "Theme: Dark" : "Theme: Light";
+    }
+
+    function setMessage(content, { error = false, badges = [] } = {}) {
+      messageBox.className = `message-box${error ? " is-error" : ""}`;
+      if (!content) {
+        messageBox.className = "message-box is-empty";
+        messageBox.textContent = "Run a question to see the response summary.";
+        return;
+      }
+
+      const badgesHtml = badges.length ? `<div class="meta-row">${badges.join("")}</div>` : "";
+      messageBox.innerHTML = `${escapeHtml(content)}${badgesHtml}`;
+    }
+
+    function setSql(sql) {
+      if (!sql) {
+        sqlBox.className = "sql-box is-empty";
+        sqlBox.textContent = "No SQL yet.";
+        return;
+      }
+      sqlBox.className = "sql-box";
+      sqlBox.textContent = sql;
+    }
+
+    function buildSourceBadge(debug) {
+      const source = debug?.source || "";
+      if (!source) {
+        return "";
+      }
+      const klass = source === "agent" ? "agent" : "fallback";
+      return `<span class="badge ${klass}">Source: ${escapeHtml(source)}</span>`;
+    }
+
+    function buildStageBadge(debug) {
+      const stage = debug?.stage || "";
+      if (!stage) {
+        return "";
+      }
+      return `<span class="badge">${escapeHtml(stage.replaceAll("_", " "))}</span>`;
+    }
+
+    function renderTable(columns, rows) {
+      if (!columns || !columns.length || !rows || !rows.length) {
+        tableBox.className = "table-box is-empty";
+        tableBox.textContent = "No rows returned.";
+        rowMeta.textContent = "Empty";
+        return;
+      }
+
+      const header = columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("");
+      const body = rows.slice(0, 20).map((row) => {
+        const cells = row.map((value) => {
+          if (value === null) {
+            return '<td><span style="color: var(--muted-2);">null</span></td>';
+          }
+          return `<td>${escapeHtml(value)}</td>`;
+        }).join("");
+        return `<tr>${cells}</tr>`;
+      }).join("");
+
+      tableBox.className = "table-box";
+      tableBox.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr>${header}</tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      `;
+      rowMeta.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"} shown`;
+    }
+
+    function clearChart() {
+      chartShell.className = "chart-shell is-empty";
+      chartShell.textContent = "No chart yet.";
+      chartMeta.textContent = "Chart";
+    }
+
+    function renderChart(chart, chartType) {
+      if (!chart || !chart.data || !chart.data.length) {
+        clearChart();
+        return;
+      }
+
+      chartShell.className = "chart-shell";
+      chartShell.innerHTML = '<div id="chartBox"></div>';
+      chartMeta.textContent = chartType ? `${chartType} chart` : "chart";
+
+      const layout = {
+        ...chart.layout,
+        paper_bgcolor: "transparent",
+        plot_bgcolor: "transparent",
+        font: {
+          color: getComputedStyle(root).getPropertyValue("--text").trim()
+        },
+        margin: { l: 44, r: 24, t: 56, b: 44 }
+      };
+
+      Plotly.newPlot("chartBox", chart.data, layout, {
+        responsive: true,
+        displayModeBar: false
+      });
+    }
+
+    async function loadHealth() {
+      try {
+        const response = await fetch("/health");
+        const data = await response.json();
+        statusText.textContent = data.status;
+        databaseText.textContent = data.database;
+        memoryText.textContent = data.agent_memory_items;
+        headerStatus.textContent = `API ${data.status} | DB ${data.database} | Memory ${data.agent_memory_items}`;
+      } catch (error) {
+        statusText.textContent = "unreachable";
+        databaseText.textContent = "unreachable";
+        memoryText.textContent = "--";
+        headerStatus.textContent = "Backend unreachable";
+      }
+    }
+
+    async function runQuery() {
+      const question = questionInput.value.trim();
+      if (!question) {
+        setMessage("Please enter a question first.", { error: true });
+        return;
+      }
+
+      setLoading(true);
+      setMessage("Working on it...");
+      setSql("");
+      renderTable([], []);
+      clearChart();
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const payload = await response.json();
+        const data = response.ok ? payload : (payload.detail || payload);
+
+        const badges = [
+          buildSourceBadge(data.debug),
+          buildStageBadge(data.debug)
+        ].filter(Boolean);
+
+        setMessage(
+          data.error ? `${data.message} ${data.error}` : data.message,
+          { error: Boolean(data.error), badges }
+        );
+        setSql(data.sql_query || "");
+        renderTable(data.columns || [], data.rows || []);
+        renderChart(data.chart, data.chart_type);
+      } catch (error) {
+        setMessage("The request failed. Check whether the API server is still running.", { error: true });
+        setSql("");
+        renderTable([], []);
+        clearChart();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    document.querySelectorAll(".chip").forEach((button) => {
+      button.addEventListener("click", () => {
+        questionInput.value = button.dataset.question;
+        runQuery();
+      });
+    });
+
+    runBtn.addEventListener("click", runQuery);
+    healthBtn.addEventListener("click", loadHealth);
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    questionInput.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        runQuery();
+      }
+    });
+
+    const savedTheme = localStorage.getItem("cogninest-theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme);
+    } else {
+      setTheme("light");
+    }
+
+    loadHealth();
+    clearChart();
+  </script>
+</body>
+</html>

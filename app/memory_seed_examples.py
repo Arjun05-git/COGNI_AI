@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+
+SEED_EXAMPLES: list[dict[str, str]] = [
+    {
+        "question": "How many patients do we have?",
+        "sql": "SELECT COUNT(*) AS total_patients FROM patients",
+    },
+    {
+        "question": "List all doctors and their specializations.",
+        "sql": "SELECT name, specialization FROM doctors ORDER BY name",
+    },
+    {
+        "question": "Which city has the most patients?",
+        "sql": "SELECT city, COUNT(*) AS patient_count FROM patients GROUP BY city ORDER BY patient_count DESC LIMIT 1",
+    },
+    {
+        "question": "How many female patients are registered in Mumbai?",
+        "sql": "SELECT COUNT(*) AS female_patients_in_mumbai FROM patients WHERE city = 'Mumbai' AND gender = 'F'",
+    },
+    {
+        "question": "Show the number of appointments per doctor.",
+        "sql": "SELECT d.name, COUNT(a.id) AS appointment_count FROM doctors d LEFT JOIN appointments a ON a.doctor_id = d.id GROUP BY d.id, d.name ORDER BY appointment_count DESC, d.name",
+    },
+    {
+        "question": "Which doctor has the most appointments?",
+        "sql": "SELECT d.name, COUNT(a.id) AS appointment_count FROM doctors d JOIN appointments a ON a.doctor_id = d.id GROUP BY d.id, d.name ORDER BY appointment_count DESC LIMIT 1",
+    },
+    {
+        "question": "Show me appointments for last month.",
+        "sql": "SELECT id, patient_id, doctor_id, appointment_date, status FROM appointments WHERE appointment_date >= date('now', 'start of month', '-1 month') AND appointment_date < date('now', 'start of month') ORDER BY appointment_date",
+    },
+    {
+        "question": "How many cancelled appointments were there last quarter?",
+        "sql": "SELECT COUNT(*) AS cancelled_appointments_last_quarter FROM appointments WHERE status = 'Cancelled' AND appointment_date >= date('now', 'start of month', '-3 months') AND appointment_date < date('now', 'start of month')",
+    },
+    {
+        "question": "Show monthly appointment count for the past 6 months.",
+        "sql": "SELECT strftime('%Y-%m', appointment_date) AS month, COUNT(*) AS appointment_count FROM appointments WHERE appointment_date >= date('now', 'start of month', '-5 months') GROUP BY month ORDER BY month",
+    },
+    {
+        "question": "List patients who visited more than 3 times.",
+        "sql": "SELECT p.id, p.first_name, p.last_name, COUNT(a.id) AS visit_count FROM patients p JOIN appointments a ON a.patient_id = p.id WHERE a.status = 'Completed' GROUP BY p.id, p.first_name, p.last_name HAVING COUNT(a.id) > 3 ORDER BY visit_count DESC, p.last_name",
+    },
+    {
+        "question": "What is the total revenue?",
+        "sql": "SELECT ROUND(SUM(total_amount), 2) AS total_revenue FROM invoices",
+    },
+    {
+        "question": "Show revenue by doctor.",
+        "sql": "SELECT d.name, ROUND(SUM(i.total_amount), 2) AS total_revenue FROM doctors d JOIN appointments a ON a.doctor_id = d.id JOIN invoices i ON i.patient_id = a.patient_id GROUP BY d.id, d.name ORDER BY total_revenue DESC",
+    },
+    {
+        "question": "Show unpaid invoices.",
+        "sql": "SELECT id, patient_id, invoice_date, total_amount, paid_amount, status FROM invoices WHERE status IN ('Pending', 'Overdue') ORDER BY invoice_date DESC",
+    },
+    {
+        "question": "What is the average treatment cost by specialization?",
+        "sql": "SELECT d.specialization, ROUND(AVG(t.cost), 2) AS average_treatment_cost FROM treatments t JOIN appointments a ON a.id = t.appointment_id JOIN doctors d ON d.id = a.doctor_id GROUP BY d.specialization ORDER BY average_treatment_cost DESC",
+    },
+    {
+        "question": "Show the top 5 patients by spending.",
+        "sql": "SELECT p.first_name, p.last_name, ROUND(SUM(i.total_amount), 2) AS total_spending FROM patients p JOIN invoices i ON i.patient_id = p.id GROUP BY p.id, p.first_name, p.last_name ORDER BY total_spending DESC LIMIT 5",
+    },
+    {
+        "question": "What percentage of appointments are no-shows?",
+        "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN status = 'No-Show' THEN 1 ELSE 0 END) / COUNT(*), 2) AS no_show_percentage FROM appointments",
+    },
+    {
+        "question": "Show the busiest day of the week for appointments.",
+        "sql": "SELECT CASE strftime('%w', appointment_date) WHEN '0' THEN 'Sunday' WHEN '1' THEN 'Monday' WHEN '2' THEN 'Tuesday' WHEN '3' THEN 'Wednesday' WHEN '4' THEN 'Thursday' WHEN '5' THEN 'Friday' ELSE 'Saturday' END AS weekday, COUNT(*) AS appointment_count FROM appointments GROUP BY strftime('%w', appointment_date) ORDER BY appointment_count DESC LIMIT 1",
+    },
+    {
+        "question": "Show revenue trend by month.",
+        "sql": "SELECT strftime('%Y-%m', invoice_date) AS month, ROUND(SUM(total_amount), 2) AS revenue FROM invoices GROUP BY month ORDER BY month",
+    },
+    {
+        "question": "Average appointment duration by doctor.",
+        "sql": "SELECT d.name, ROUND(AVG(t.duration_minutes), 2) AS average_duration_minutes FROM doctors d JOIN appointments a ON a.doctor_id = d.id JOIN treatments t ON t.appointment_id = a.id GROUP BY d.id, d.name ORDER BY average_duration_minutes DESC",
+    },
+    {
+        "question": "List patients with overdue invoices.",
+        "sql": "SELECT p.first_name, p.last_name, i.invoice_date, i.total_amount, i.paid_amount FROM invoices i JOIN patients p ON p.id = i.patient_id WHERE i.status = 'Overdue' ORDER BY i.invoice_date DESC",
+    },
+    {
+        "question": "Compare revenue between departments.",
+        "sql": "SELECT d.department, ROUND(SUM(i.total_amount), 2) AS revenue FROM doctors d JOIN appointments a ON a.doctor_id = d.id JOIN invoices i ON i.patient_id = a.patient_id GROUP BY d.department ORDER BY revenue DESC",
+    },
+    {
+        "question": "Show patient registration trend by month.",
+        "sql": "SELECT strftime('%Y-%m', registered_date) AS month, COUNT(*) AS registrations FROM patients GROUP BY month ORDER BY month",
+    },
+]
